@@ -22,11 +22,32 @@ def load_data(cfg: dict):
             n_classes=2,
             random_state=cfg["seed"],
         )
-    else:
+    elif d["source"] == "csv":
         # Real data path: a CSV with a `target` column.
         df = pd.read_csv(d["csv_path"])
-        y = df[d["target"]].to_numpy()
+        labels = df[d["target"]]
+        if labels.isna().any():
+            raise ValueError("CSV target contains missing labels; clean them before training.")
+        classes = labels.unique()
+        if len(classes) != 2:
+            raise ValueError(
+                "This template supports binary classification only; "
+                f"found {len(classes)} target classes. Map labels to two classes "
+                "or adapt the model and evaluation for multiclass classification."
+            )
+        positive = d.get("positive_label", 1)
+        if "positive_label" not in d and set(classes) != {0, 1}:
+            raise ValueError(
+                "Set data.positive_label to the CSV label to evaluate as class 1 "
+                "(for example, 'attack'); the other label becomes class 0."
+            )
+        if positive not in classes:
+            raise ValueError("data.positive_label must match one of the two CSV target labels.")
+        y = (labels == positive).to_numpy(dtype="int64")
         X = df.drop(columns=[d["target"]]).select_dtypes("number").to_numpy()
+
+    else:
+        raise ValueError("data.source must be synthetic or csv.")
 
     X_train, X_test, y_train, y_test = train_test_split(
         X, y, test_size=d["test_size"], random_state=cfg["seed"], stratify=y
