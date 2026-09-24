@@ -107,18 +107,3 @@ looks clean.
 
 Follow the syllabus AI-use policy: assistants are allowed as aids, but acknowledge
 substantive AI use and do not submit AI-generated implementations for from-scratch tasks.
-
-## CSV label requirements
-
-The starter model and metrics support **binary classification**. Numeric `0/1`
-labels work without extra settings. For other two-class labels, set
-`data.positive_label` to the label representing the positive class (for example,
-`positive_label: attack` for `benign/attack`, or `positive_label: 2` for `1/2`).
-That label becomes `1`; the other becomes `0`. Precision, recall, F1 and ROC-AUC
-refer to this positive class. Match the CSV label's type in YAML: quote string
-labels and leave numeric labels unquoted. Missing targets and datasets with other
-than two classes are rejected with a clear error. For multiclass work, adapt both
-the model and evaluation, or explicitly map the task to two classes first.
-
-The grading harness reads metrics from `output.dir` in `config.yaml`. If you
-change this directory, also update `.gitignore` to exclude the generated files.

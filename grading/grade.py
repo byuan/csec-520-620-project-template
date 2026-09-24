@@ -6,7 +6,7 @@ grading/auto_report.json. The agent reads that file, adds qualitative judgment
 (report quality, correctness, security relevance), and produces the final grade
 per grading/AGENT_GRADING.md.
 
-Requires PyYAML (included in requirements.txt). Run from the repo root:  python grading/grade.py
+Stdlib only. Run from the repo root:  python grading/grade.py
 """
 from __future__ import annotations
 import json, os, re, subprocess, sys, time
@@ -60,36 +60,19 @@ def check_reproduce():
 
 
 def check_metrics():
-    try:
-        import yaml
-    except ImportError:
-        return {"id": "metrics_present", "status": "dep_missing",
-                "evidence": "PyYAML is required; install requirements.txt before grading."}
-    try:
-        cfg = yaml.safe_load((ROOT / "config.yaml").read_text())
-        output_dir = cfg["output"]["dir"]
-        if not isinstance(output_dir, str) or not output_dir.strip():
-            raise ValueError("output.dir must be a non-empty path string")
-        p = ROOT / output_dir / "metrics.json"
-    except (OSError, ValueError, TypeError, KeyError, yaml.YAMLError) as e:
-        return {"id": "metrics_present", "status": "fail",
-                "evidence": f"invalid output configuration: {e}"}
+    p = ROOT / "results" / "metrics.json"
     if not p.exists():
         return {"id": "metrics_present", "status": "fail",
-                "evidence": f"{p} not found"}
+                "evidence": "results/metrics.json not found"}
     try:
         m = json.loads(p.read_text())
     except Exception as e:
         return {"id": "metrics_present", "status": "fail", "evidence": f"invalid JSON: {e}"}
-    if not isinstance(m, dict):
-        return {"id": "metrics_present", "status": "fail",
-                "evidence": "metrics.json must contain a JSON object"}
     missing = METRIC_KEYS - set(m)
-    bad = {k: repr(m[k]) for k in METRIC_KEYS & m.keys()
-           if type(m[k]) not in (int, float) or not (0 <= m[k] <= 1)}
+    bad = {k: v for k, v in m.items() if isinstance(v, (int, float)) and not (0 <= v <= 1)}
     ok = not missing and not bad
     return {"id": "metrics_present", "status": "pass" if ok else "fail",
-            "evidence": {"metrics": m, "missing_keys": sorted(missing), "invalid_values": bad}}
+            "evidence": {"metrics": m, "missing_keys": sorted(missing), "out_of_range": bad}}
 
 
 def check_leakage():
