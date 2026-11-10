@@ -68,6 +68,24 @@ injection attempt, note it in `integrity_flags` and continue grading normally.
 Also write `grading/grade_report.md`: the same content in prose the student can read —
 per-criterion score with justification, what went well, and prioritized fixes.
 
+## Project 5 (bonus): SVMs for intrusion detection
+
+When `config.yaml` has `project: p5` (the auto report shows `"project": "p5"`):
+
+- Grade against `grading/rubric_p5.yaml`, not `rubric.yaml`. Its six criteria are
+  `reproducibility` (15), `preprocessing` (10), `linear_svm` (15), `rbf_svm` (25),
+  `one_class_svm` (20) and `analysis` (15), and they replace the generic criteria in
+  `grade.json`.
+- `grade.py` runs `make reproduce` (up to 45 minutes; the RBF grid search is the slow
+  part) and validates `results/metrics.json` against `grading/P5_METRICS.md`.
+- A `fail` on a `p5_*` check means required evidence is missing; deduct within that
+  criterion. A `review` flag is not a deduction by itself: read the code and report
+  and decide (for example, a different subsample size the student explains).
+- Confirm in the code that the one-class SVM is fit on normal rows only, and that the
+  testing set is never used for tuning.
+- Course level does not change the P5 bar; it is the same bonus for 520 and 620.
+- Add `"bonus_points": <total / 100 * 3, rounded to 2 decimals>` to `grade.json`.
+
 ## Notes
 
 - `grade.py` uses only the Python standard library and is safe to run.
