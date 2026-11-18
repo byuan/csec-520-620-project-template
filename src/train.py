@@ -10,7 +10,7 @@ import torch
 import torch.nn as nn
 import yaml
 
-from .data import load_data
+from .data import load_data, save_scaler
 from .model import MLP
 from .evaluate import compute_metrics, save_confusion_matrix, save_roc_curve
 
@@ -26,7 +26,7 @@ def main(config_path: str):
     set_seed(cfg["seed"])
     out = cfg["output"]["dir"]; os.makedirs(out, exist_ok=True)
 
-    X_tr, X_te, y_tr, y_te = load_data(cfg)
+    X_tr, X_te, y_tr, y_te, scaler, feature_names = load_data(cfg, return_scaler=True)
     device = "cuda" if torch.cuda.is_available() else "cpu"
 
     Xtr = torch.tensor(X_tr, device=device); ytr = torch.tensor(y_tr, device=device)
@@ -58,6 +58,8 @@ def main(config_path: str):
     save_confusion_matrix(y_te, prob, os.path.join(out, "confusion_matrix.png"))
     save_roc_curve(y_te, prob, os.path.join(out, "roc_curve.png"))
     torch.save(model.state_dict(), os.path.join(out, "model.pt"))
+    # The model only works on inputs scaled like the training data: save the scaler too.
+    save_scaler(os.path.join(out, "scaler.npz"), scaler, feature_names)
     print("Results written to", out)
     print(json.dumps(metrics, indent=2))
 

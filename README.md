@@ -25,7 +25,12 @@ make reproduce        # == python -m src.train --config config.yaml
 ```
 
 `make reproduce` trains the model and writes to `results/`:
-`metrics.json`, `confusion_matrix.png`, `roc_curve.png`, and `model.pt`.
+`metrics.json`, `confusion_matrix.png`, `roc_curve.png`, `model.pt`, and `scaler.npz`.
+
+`scaler.npz` holds the feature scaling fitted on the training split (mean, scale and
+feature names, in column order). The model only works on inputs scaled this way, so
+keep it with `model.pt` if you reuse the model later. Load it with
+`src.data.load_scaler`, then scale new raw data as `(X_raw - mean) / scale`.
 
 The template ships with a **synthetic dataset**, so it runs before you add real data.
 

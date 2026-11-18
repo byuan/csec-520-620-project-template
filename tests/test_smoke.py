@@ -1,6 +1,6 @@
 """Smoke tests: the pipeline runs and produces sane metrics."""
 import numpy as np
-from src.data import load_data
+from src.data import load_data, load_scaler, save_scaler
 from src.evaluate import compute_metrics
 
 CFG = {
@@ -13,6 +13,18 @@ def test_load_data_shapes():
     Xtr, Xte, ytr, yte = load_data(CFG)
     assert Xtr.shape[1] == Xte.shape[1] == 10
     assert len(ytr) == 300 and len(yte) == 100
+
+
+def test_scaler_round_trip(tmp_path):
+    Xtr, Xte, ytr, yte, scaler, names = load_data(CFG, return_scaler=True)
+    assert names == [f"x{i}" for i in range(10)]
+    path = tmp_path / "scaler.npz"
+    save_scaler(str(path), scaler, names)
+    mean, scale, loaded_names = load_scaler(str(path))
+    assert loaded_names == names
+    # Undo the scaling with the saved values, then redo it: must match exactly.
+    raw = scaler.inverse_transform(Xte)
+    np.testing.assert_allclose(((raw - mean) / scale).astype("float32"), Xte, atol=1e-5)
 
 
 def test_metrics_range():
